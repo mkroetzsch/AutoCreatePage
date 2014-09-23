@@ -52,7 +52,7 @@ directory of your MediaWiki installation. You can do this with git by calling:
 
 from your extension directory. Then add to your LocalSettings.php:
 
-`include_once "$IP/extensions/AutoCreatePage/CreatePage.php";`
+`include_once "$IP/extensions/AutoCreatePage/AutoCreatePage.php";`
 
 The code requires MediaWiki 1.21 to work. Higher versions might also work.
 
