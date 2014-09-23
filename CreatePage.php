@@ -32,7 +32,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 $gEnablePageCreation = true;
 
 $GLOBALS['wgExtensionCredits']['other'][] = array(
-	'name'         => 'Create Page',
+	'name'         => 'AutoCreatePage',
 	'version'      => '0.4',
 	'author'       => '[http://korrekt.org Markus Krötzsch], Daniel Herzig', 
 	'url'          => ' ',
@@ -40,7 +40,7 @@ $GLOBALS['wgExtensionCredits']['other'][] = array(
 	'license-name' => 'GPL-2.0+'
 );
 
-$GLOBALS['wgExtensionMessagesFiles']['CreatePageMagic'] =  dirname(__FILE__) . '/CreatePage.i18n.magic.php';
+$GLOBALS['wgExtensionMessagesFiles']['AutoCreatePageMagic'] =  dirname(__FILE__) . '/AutoCreatePage.i18n.magic.php';
 
 $GLOBALS['wgExtensionFunctions'][] = function() {
 
