@@ -3,7 +3,7 @@ CreatePage
 
 MediaWiki extension to create pages with a parser function.
 
-The purose of this is that wiki pages, especially pages that use templates,
+The purpose of this is that wiki pages, especially pages that use templates,
 can trigger the creation of auxiliary pages. This makes most sense when using
 an extension like Semantic MediaWiki, which can create rich content pages
 automatically without much user input.
@@ -42,10 +42,29 @@ content namespaces. Nothing will happen if the parser function is called on, e.g
 template pages.
 
 
+Installation
+------------
+
+Download the repository (including the top directory `CreatePage`) to the extension
+directory of your MediaWiki installation. You can do this with git by calling:
+
+`git clone https://github.com/mkroetzsch/CreatePage.git`
+
+from your extension directory. Then add to your LocalSettings.php:
+
+`include_once "$IP/extensions/CreatePage/CreatePage.php";`
+
+The code requires MediaWiki 1.21 to work. Higher versions might also work.
+
+
 Status
 ------
 
 This code is experimental. Use with care. Internationalization is largely missing.
+
+As of MediaWiki 1.21, the code avoids deprecated functions or hooks. However, it
+accesses the parser's `mStripState` member (intended private?) to process nowiki
+tags. This might have to be replaced by some other approach in the future.
 
 
 Credits
