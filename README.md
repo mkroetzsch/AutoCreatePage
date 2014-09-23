@@ -1,7 +1,7 @@
-CreatePage
-==========
+AutoCreatePage
+==============
 
-MediaWiki extension to create pages with a parser function.
+MediaWiki extension to automatically create pages with a parser function.
 
 The purpose of this is that wiki pages, especially pages that use templates,
 can trigger the creation of auxiliary pages. This makes most sense when using
@@ -45,14 +45,14 @@ template pages.
 Installation
 ------------
 
-Download the repository (including the top directory `CreatePage`) to the extension
+Download the repository (including the top directory `AutoCreatePage`) to the extension
 directory of your MediaWiki installation. You can do this with git by calling:
 
-`git clone https://github.com/mkroetzsch/CreatePage.git`
+`git clone https://github.com/mkroetzsch/AutoCreatePage.git`
 
 from your extension directory. Then add to your LocalSettings.php:
 
-`include_once "$IP/extensions/CreatePage/CreatePage.php";`
+`include_once "$IP/extensions/AutoCreatePage/CreatePage.php";`
 
 The code requires MediaWiki 1.21 to work. Higher versions might also work.
 
