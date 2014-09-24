@@ -77,10 +77,8 @@ function createPageIfNotExisting( array $rawParams ) {
 		return "Error: this function must be given a valid title text for the page to be created."; //TODO i18n
 	}
 
-	$sourcetitle = $parser->getTitle();
-
 	// Create pages only if in contentnamespace (not for templates, forms etc.)
-	if ( !in_array( $sourcetitle->getNamespace(), $wgContentNamespaces ) ) {
+	if ( !in_array( $parser->getTitle()->getNamespace(), $wgContentNamespaces ) ) {
 		return "";
 	}
 
