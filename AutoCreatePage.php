@@ -47,8 +47,8 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
 	$GLOBALS['wgHooks']['ParserFirstCallInit'][] = function ( \Parser &$parser ) {
 
 		$parser->setFunctionHook( 'createPage', function( $parser ) {
-				return createPageIfNotExisting( func_get_args() );
-			} );
+			return createPageIfNotExisting( func_get_args() );
+		} );
 
 	};
 
