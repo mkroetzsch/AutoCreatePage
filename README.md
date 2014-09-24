@@ -54,7 +54,8 @@ from your extension directory. Then add to your LocalSettings.php:
 
 `include_once "$IP/extensions/AutoCreatePage/AutoCreatePage.php";`
 
-The code requires MediaWiki 1.21 to work. Higher versions might also work.
+The code requires MediaWiki 1.21 to work. It has been tested on MediaWiki 1.23.
+Future versions might also work.
 
 
 Status
@@ -62,7 +63,7 @@ Status
 
 This code is experimental. Use with care. Internationalization is largely missing.
 
-As of MediaWiki 1.21, the code avoids deprecated functions or hooks. However, it
+As of MediaWiki 1.23, the code avoids deprecated functions or hooks. However, it
 accesses the parser's `mStripState` member (intended private?) to process nowiki
 tags. This might have to be replaced by some other approach in the future.
 
@@ -71,6 +72,6 @@ Credits
 -------
 
 The original idea and first implementation was done by Daniel Herzig (AIFB). The code
-was modernized to work with MediaWiki 1.21 by Markus Kroetzsch.
+was modernized to work with MediaWiki 1.23 by Markus Kroetzsch.
 
 The code is licensed under GPLv2.
