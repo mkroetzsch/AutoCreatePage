@@ -24,18 +24,31 @@ displays all relevant data, but this time with English labels).
 
 Both of these uses were pioneered by the [AIFB Portal Wiki](http://www.aifb.kit.edu/).
 
+Another usage of this function is for bulk-importing data (using an extension like
+ExternalData) and then bulk-generating wiki pages from it. Particularly useful for
+creating multiple semantic pages in Semantic MediaWiki or Cargo based on the contents
+of external data.
+
 
 Usage
 -----
 
-The extension provides one parser function, `createpageifnotex` that takes a page
-title and a text to use when creating the page. Example:
+The extension provides two parser functions:
+* `createpageifnotex` - creates a new page but will not overwrite an existing page.
+* `createorreplacepage` - will either create a new page if it doesn't exist, or else create a new revision for a page if it already exists.
+
+Both functions take two or three positional parameters:
+1. a page title;
+2. text to use when creating the page;
+3. (optional) the text to use for the commit message. The default is a message that says *Page created/updated automatically by parser function on page <link to page>*.
+
+An example:
 
 `{{#createpageifnotex:Test page 1|The content of test page 1}}`
 
-Pages are only created if they don't exist yet. The author of the new page is the
-user who saved the edit to the page that contained the parser function call. Pages
-are only created when saving an edit, never when viewing a page.
+The author of the new page/revision is the user who saved the edit to the page
+that contained the parser function call. Pages are only created when
+saving an edit, never when viewing a page.
 
 Pages are only created if the parser function is used on a page in one of MediaWiki's
 content namespaces. Nothing will happen if the parser function is called on, e.g.,

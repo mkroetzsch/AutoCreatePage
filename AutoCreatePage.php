@@ -47,7 +47,14 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
 	$GLOBALS['wgHooks']['ParserFirstCallInit'][] = function ( \Parser &$parser ) {
 
 		$parser->setFunctionHook( 'createPage', function( $parser ) {
-			return createPageIfNotExisting( func_get_args() );
+			return createPage( false, func_get_args() );
+		} );
+
+	};
+	$GLOBALS['wgHooks']['ParserFirstCallInit'][] = function ( \Parser &$parser ) {
+
+		$parser->setFunctionHook( 'createOrReplacePage', function( $parser ) {
+			return createPage( true, func_get_args() );
 		} );
 
 	};
@@ -56,11 +63,15 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
 };
 
 /**
- * Handles the parser function for creating pages that don't exist yet,
- * filling them with the given default content. It is possible to use &lt;nowiki&gt;
+ * Handles the parser function for creating/editing pages,
+ * filling them with the given content. It is possible to use &lt;nowiki&gt;
  * in the default text parameter to insert verbatim wiki text.
+ *
+ * @param $canReplace true indicates that the content will be replaced with a new
+ *                    revision if the page already exists, false indicates that the
+ *                    existing page will be left untouched.
  */
-function createPageIfNotExisting( array $rawParams ) {
+function createPage( $canReplace, array $rawParams ) {
 	global $wgContentNamespaces, $gEnablePageCreation;
 
 	if ( !$gEnablePageCreation ) {
@@ -71,6 +82,7 @@ function createPageIfNotExisting( array $rawParams ) {
 		$parser = $rawParams[0];
 		$newPageTitleText = $rawParams[1];
 		$newPageContent = $rawParams[2];
+		$newPageMessage = $rawParams[3];
 	}
 
 	if ( empty( $newPageTitleText ) ) {
@@ -88,9 +100,12 @@ function createPageIfNotExisting( array $rawParams ) {
 	// Store data in the parser output for later use:
 	$createPageData = $parser->getOutput()->getExtensionData( 'createPage' );
 	if ( is_null( $createPageData ) ) {
-		$createPageData = array();
+		$createPageData = array(
+			false => array(),
+			true  => array()
+			);
 	}
-	$createPageData[$newPageTitleText] = $newPageContent;
+	$createPageData[$canReplace][$newPageTitleText] = array( $newPageContent, $newPageMessage );
 	$parser->getOutput()->setExtensionData( 'createPage', $createPageData );
 
 	return "";
@@ -115,17 +130,23 @@ function doCreatePages( &$article, &$editInfo, $changed ) {
 	$sourceTitle = $article->getTitle();
 	$sourceTitleText = $sourceTitle->getPrefixedText();
 
-	foreach ( $createPageData as $pageTitleText => $pageContentText ) {
-		$pageTitle = Title::newFromText( $pageTitleText );
-		// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
+	foreach ( $createPageData as $canReplace => $pageData ) {
+	        foreach ( $pageData as $pageTitleText => $pageUpdate ) {
+			list( $pageContentText, $pageComment ) = $pageUpdate;
+			$pageTitle = Title::newFromText( $pageTitleText );
+			// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
 
-		if ( !is_null( $pageTitle ) && !$pageTitle->isKnown() && $pageTitle->canExist() ){
-			$newWikiPage = new WikiPage( $pageTitle );
-			$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
-			$newWikiPage->doEditContent( $pageContent,
-				"Page created automatically by parser function on page [[$sourceTitleText]]" ); //TODO i18n
-
-			// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
+			if ( is_null( $pageTitle ) ) {
+				continue;
+			}
+			$isKnown = $pageTitle->isKnown();
+			if ( !is_null( $pageTitle ) && ( $canReplace || !$isKnown ) && $pageTitle->canExist() ) {
+				$newWikiPage = new WikiPage( $pageTitle );
+				$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
+				$message = isset( $pageComment ) ? $pageComment : 'Page ' . ( $isKnown ? 'upd' : 'cre' ) . "ated automatically by parser function on page [[$sourceTitleText]]"; //TODO i18n
+				$newWikiPage->doEditContent( $pageContent, $message );
+				// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
+			}
 		}
 	}
 
