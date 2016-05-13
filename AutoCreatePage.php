@@ -27,13 +27,15 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 /**
- * This is set to false during page creation to avoid recursive creation of pages.
+ * This is decreased during page creation to avoid infinite recursive creation of pages.
  */
-$gEnablePageCreation = true;
+$egAutoCreatePageMaxRecursion = 1;
+
+$egAutoCreatePageIgnoreEmptyTitle = false;
 
 $GLOBALS['wgExtensionCredits']['other'][] = array(
 	'name'         => 'AutoCreatePage',
-	'version'      => '0.4',
+	'version'      => '0.5',
 	'author'       => '[http://korrekt.org Markus Krötzsch], Daniel Herzig', 
 	'url'          => ' ',
 	'description'  => 'Provides a parser function to create additional wiki pages with default content when saving a page.', //TODO i18n
@@ -61,25 +63,31 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
  * in the default text parameter to insert verbatim wiki text.
  */
 function createPageIfNotExisting( array $rawParams ) {
-	global $wgContentNamespaces, $gEnablePageCreation;
+	global $wgContentNamespaces, $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle;
 
-	if ( !$gEnablePageCreation ) {
-		return "Error: auto-created pages cannot create other pages."; //TODO i18n
+	if ( $egAutoCreatePageMaxRecursion <= 0 ) {
+		return 'Error: Recursion level for auto-created pages exeeded.'; //TODO i18n
 	}
 
-	if ( isset( $rawParams[2] ) && isset( $rawParams[1] ) && isset( $rawParams[2] ) ) {
+	if ( isset( $rawParams[0] ) && isset( $rawParams[1] ) && isset( $rawParams[2] ) ) {
 		$parser = $rawParams[0];
 		$newPageTitleText = $rawParams[1];
 		$newPageContent = $rawParams[2];
+	} else {
+		throw new MWException( 'Hook invoked with missing parameters.' );
 	}
 
 	if ( empty( $newPageTitleText ) ) {
-		return "Error: this function must be given a valid title text for the page to be created."; //TODO i18n
+		if ( $egAutoCreatePageIgnoreEmptyTitle === false ) {
+			return 'Error: this function must be given a valid title text for the page to be created.'; //TODO i18n
+		} else {
+			return '';
+		}
 	}
 
 	// Create pages only if in contentnamespace (not for templates, forms etc.)
 	if ( !in_array( $parser->getTitle()->getNamespace(), $wgContentNamespaces ) ) {
-		return "";
+		return '';
 	}
 
 	// Get the raw text of $newPageContent as it was before stripping <nowiki>:
@@ -102,7 +110,7 @@ function createPageIfNotExisting( array $rawParams ) {
  * Note that article is, in spite of its name, a WikiPage object since MW 1.21.
  */
 function doCreatePages( &$article, &$editInfo, $changed ) {
-	global $gEnablePageCreation;
+	global $egAutoCreatePageMaxRecursion;
 
 	$createPageData = $editInfo->output->getExtensionData( 'createPage' );
 	if ( is_null( $createPageData ) ) {
@@ -110,7 +118,7 @@ function doCreatePages( &$article, &$editInfo, $changed ) {
 	}
 
 	// Prevent pages to be created by pages that are created to avoid loops:
-	$gEnablePageCreation = false;
+	$egAutoCreatePageMaxRecursion--;
 
 	$sourceTitle = $article->getTitle();
 	$sourceTitleText = $sourceTitle->getPrefixedText();
@@ -131,7 +139,7 @@ function doCreatePages( &$article, &$editInfo, $changed ) {
 
 	// Reset state. Probably not needed since parsing is usually done here anyway:
 	$editInfo->output->setExtensionData( 'createPage', null ); 
-	$gEnablePageCreation = true;
+	$egAutoCreatePageMaxRecursion++;
 
 	return true;
 }

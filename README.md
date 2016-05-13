@@ -58,6 +58,20 @@ The code requires MediaWiki 1.21 to work. It has been tested on MediaWiki 1.23.
 Future versions might also work.
 
 
+Configuration
+-------------
+
+The extension supports two configuration variables, that can be set in
+LocalSettings.php.
+
+`$egAutoCreatePageMaxRecursion`: The maximum recursion depth to which calls of
+`createpageifnotex` are executed on created pages. Default: 1.
+
+`$egAutoCreatePageIgnoreEmptyTitle`: If invocations of `createpageifnotex`
+should be silently ignored. Default: false (will put an error message on the
+wiki page).
+
+
 Status
 ------
 
