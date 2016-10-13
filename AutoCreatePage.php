@@ -33,9 +33,11 @@ $egAutoCreatePageMaxRecursion = 1;
 
 $egAutoCreatePageIgnoreEmptyTitle = false;
 
+$egAutoCreatePageNamespaces = $wgContentNamespaces;
+
 $GLOBALS['wgExtensionCredits']['other'][] = array(
 	'name'         => 'AutoCreatePage',
-	'version'      => '0.5',
+	'version'      => '0.6',
 	'author'       => '[http://korrekt.org Markus Krötzsch], Daniel Herzig', 
 	'url'          => ' ',
 	'description'  => 'Provides a parser function to create additional wiki pages with default content when saving a page.', //TODO i18n
@@ -63,7 +65,7 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
  * in the default text parameter to insert verbatim wiki text.
  */
 function createPageIfNotExisting( array $rawParams ) {
-	global $wgContentNamespaces, $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle;
+	global $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle, $egAutoCreatePageNamespaces;
 
 	if ( $egAutoCreatePageMaxRecursion <= 0 ) {
 		return 'Error: Recursion level for auto-created pages exeeded.'; //TODO i18n
@@ -85,8 +87,8 @@ function createPageIfNotExisting( array $rawParams ) {
 		}
 	}
 
-	// Create pages only if in contentnamespace (not for templates, forms etc.)
-	if ( !in_array( $parser->getTitle()->getNamespace(), $wgContentNamespaces ) ) {
+	// Create pages only if the page calling the parser function is within defined namespaces
+	if ( !in_array( $parser->getTitle()->getNamespace(), $egAutoCreatePageNamespaces ) ) {
 		return '';
 	}
 
