@@ -61,7 +61,7 @@ Future versions might also work.
 Configuration
 -------------
 
-The extension supports two configuration variables, that can be set in
+The extension supports three configuration variables, that can be set in
 LocalSettings.php.
 
 `$egAutoCreatePageMaxRecursion`: The maximum recursion depth to which calls of
@@ -71,6 +71,13 @@ LocalSettings.php.
 should be silently ignored. Default: false (will put an error message on the
 wiki page).
 
+`$egAutoCreatePageNamespaces`: The list of namespaces in which calls of
+`createpageifnotex` are executed. If your call originates from a page not in
+one of these namespaces, it gets ignored. Defaults to `$wgContentNamespaces`.
+Example:
+```php
+$egAutoCreatePageNamespaces = [ NS_MAIN, NS_USER, NS_CUSTOM ];
+```
 
 Status
 ------
