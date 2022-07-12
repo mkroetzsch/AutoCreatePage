@@ -1,5 +1,8 @@
 <?php
 
+use MediaWiki\Hook\ParserFirstCallInitHook;
+use MediaWiki\Storage\Hook\RevisionDataUpdatesHook;
+
 /**
  * This extension provides a parser function #createpageifnotex that can be used to create
  * additional auxiliary pages when a page is saved. New pages are only created if they do
@@ -22,20 +25,24 @@
  * @file
  */
 
-class AutoCreatePage {
+class AutoCreatePage implements ParserFirstCallInitHook, RevisionDataUpdatesHook {
 
-	public static function onParserFirstCallInit( $parser ) {
+	public function onParserFirstCallInit( $parser ) {
 		$parser->setFunctionHook( 'createPage', [ self::class, 'createPageIfNotExisting' ] );
 	}
 
-	public function onArticleEditUpdates( $wikiPage, $editInfo, $changed ) {
-		self::doCreatePages( $wikiPage, $editInfo, $changed );
+	public function onRevisionDataUpdates( $title, $renderedRevision, &$updates ) {
+		return self::doCreatePages( $title, $renderedRevision->getRevisionParserOutput() );
 	}
 
 	/**
 	 * Handles the parser function for creating pages that don't exist yet,
 	 * filling them with the given default content. It is possible to use &lt;nowiki&gt;
 	 * in the default text parameter to insert verbatim wiki text.
+	 * @param Parser $parser
+	 * @param string $newPageTitleText
+	 * @param string $newPageContent
+	 * @return string
 	 */
 	public static function createPageIfNotExisting( $parser, $newPageTitleText, $newPageContent ) {
 		global $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle,
@@ -78,11 +85,16 @@ class AutoCreatePage {
 	 * Creates pages that have been requested by the create page parser function. This is done only
 	 * after the safe is complete to avoid any concurrent article modifications.
 	 * Note that article is, in spite of its name, a WikiPage object since MW 1.21.
+	 * @param Title $sourceTitle
+	 * @param ParserOutput $output
+	 * @return bool
+	 * @throws MWContentSerializationException
+	 * @throws MWException
 	 */
-	private static function doCreatePages( $article, $editInfo, $changed ) {
+	private static function doCreatePages( $sourceTitle, $output ) {
 		global $egAutoCreatePageMaxRecursion;
 
-		$createPageData = $editInfo->output->getExtensionData( 'createPage' );
+		$createPageData = $output->getExtensionData( 'createPage' );
 		if ( $createPageData === null ) {
 			return true; // no pages to create
 		}
@@ -90,7 +102,6 @@ class AutoCreatePage {
 		// Prevent pages to be created by pages that are created to avoid loops:
 		$egAutoCreatePageMaxRecursion--;
 
-		$sourceTitle = $article->getTitle();
 		$sourceTitleText = $sourceTitle->getPrefixedText();
 
 		foreach ( $createPageData as $pageTitleText => $pageContentText ) {
@@ -102,13 +113,12 @@ class AutoCreatePage {
 				$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
 				$newWikiPage->doEditContent( $pageContent,
 					"Page created automatically by parser function on page [[$sourceTitleText]]" ); // TODO i18n
-
 				// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
 			}
 		}
 
 		// Reset state. Probably not needed since parsing is usually done here anyway:
-		$editInfo->output->setExtensionData( 'createPage', null );
+		$output->setExtensionData( 'createPage', null );
 		$egAutoCreatePageMaxRecursion++;
 
 		return true;
