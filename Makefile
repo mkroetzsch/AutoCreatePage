@@ -3,7 +3,7 @@ EXTENSION := AutoCreatePage
 MW_VERSION ?= 1.35
 
 EXTENSION_FOLDER := /var/www/html/extensions/$(EXTENSION)
-IMAGE_NAME := $(shell echo $(EXTENSION) | tr A-Z a-z}):test-$(MW_VERSION)-$(SMW_VERSION)
+IMAGE_NAME := $(shell echo $(EXTENSION) | tr A-Z a-z}):test-$(MW_VERSION)
 PWD := $(shell bash -c "pwd -W 2>/dev/null || pwd")# this way it works on Windows and Linux
 DOCKER_RUN_ARGS := --rm -v $(PWD)/coverage:$(EXTENSION_FOLDER)/coverage -w $(EXTENSION_FOLDER) $(IMAGE_NAME)
 docker_run := docker run $(DOCKER_RUN_ARGS)

@@ -9,18 +9,19 @@
   "description": "Provides a parser function to create additional wiki pages with default content when saving a page.",
   "license-name": "GPL-2.0+",
   "requires": {
-    "MediaWiki": ">= 1.31"
+    "MediaWiki": ">= 1.35"
   },
   "AutoloadClasses": {
     "AutoCreatePage": "AutoCreatePage.php"
   },
   "Hooks": {
-    "ParserFirstCallInit": [
-      "AutoCreatePage::onParserFirstCallInit"
-    ],
-    "ArticleEditUpdates": [
-      "AutoCreatePage::onArticleEditUpdates"
-    ]
+    "ParserFirstCallInit": "main",
+    "RevisionDataUpdates": "main"
+  },
+  "HookHandlers": {
+    "main": {
+      "class": "AutoCreatePage"
+    }
   },
   "config": {
     "AutoCreatePageMaxRecursion": 1,
