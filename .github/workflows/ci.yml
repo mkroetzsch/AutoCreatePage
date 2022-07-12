@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+
+  ci:
+
+    runs-on: ubuntu-20.04
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      matrix:
+        include:
+          - mediawiki_version: '1.35'
+            experimental: false
+          - mediawiki_version: '1.36'
+            experimental: false
+          - mediawiki_version: '1.37'
+            experimental: false
+
+    env:
+      MW_VERSION: ${{ matrix.mediawiki_version }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - run: make ci

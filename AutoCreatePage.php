@@ -25,11 +25,11 @@
 class AutoCreatePage {
 
 	public static function onParserFirstCallInit( $parser ) {
-		$parser->setFunctionHook( 'createPage', [ self::class, 'createPageIfNotExisting' ]);
+		$parser->setFunctionHook( 'createPage', [ self::class, 'createPageIfNotExisting' ] );
 	}
 
 	public function onArticleEditUpdates( $wikiPage, $editInfo, $changed ) {
-		self::doCreatePages($wikiPage, $editInfo, $changed);
+		self::doCreatePages( $wikiPage, $editInfo, $changed );
 	}
 
 	/**
@@ -44,12 +44,12 @@ class AutoCreatePage {
 		$autoCreatePageNamespaces = $egAutoCreatePageNamespaces ?? $wgContentNamespaces;
 
 		if ( $egAutoCreatePageMaxRecursion <= 0 ) {
-			return 'Error: Recursion level for auto-created pages exceeded.'; //TODO i18n
+			return 'Error: Recursion level for auto-created pages exceeded.'; // TODO i18n
 		}
 
 		if ( empty( $newPageTitleText ) ) {
 			if ( $egAutoCreatePageIgnoreEmptyTitle === false ) {
-				return 'Error: this function must be given a valid title text for the page to be created.'; //TODO i18n
+				return 'Error: this function must be given a valid title text for the page to be created.'; // TODO i18n
 			} else {
 				return '';
 			}
@@ -65,8 +65,8 @@ class AutoCreatePage {
 
 		// Store data in the parser output for later use:
 		$createPageData = $parser->getOutput()->getExtensionData( 'createPage' );
-		if ( is_null( $createPageData ) ) {
-			$createPageData = array();
+		if ( $createPageData === null ) {
+			$createPageData = [];
 		}
 		$createPageData[$newPageTitleText] = $newPageContent;
 		$parser->getOutput()->setExtensionData( 'createPage', $createPageData );
@@ -83,7 +83,7 @@ class AutoCreatePage {
 		global $egAutoCreatePageMaxRecursion;
 
 		$createPageData = $editInfo->output->getExtensionData( 'createPage' );
-		if ( is_null( $createPageData ) ) {
+		if ( $createPageData === null ) {
 			return true; // no pages to create
 		}
 
@@ -97,11 +97,11 @@ class AutoCreatePage {
 			$pageTitle = Title::newFromText( $pageTitleText );
 			// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
 
-			if ( !is_null( $pageTitle ) && !$pageTitle->isKnown() && $pageTitle->canExist() ){
+			if ( $pageTitle !== null && !$pageTitle->isKnown() && $pageTitle->canExist() ) {
 				$newWikiPage = new WikiPage( $pageTitle );
 				$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
 				$newWikiPage->doEditContent( $pageContent,
-					"Page created automatically by parser function on page [[$sourceTitleText]]" ); //TODO i18n
+					"Page created automatically by parser function on page [[$sourceTitleText]]" ); // TODO i18n
 
 				// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
 			}
