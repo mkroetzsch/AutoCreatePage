@@ -1,0 +1,35 @@
+{
+  "name": "AutoCreatePage",
+  "version": "0.6-dev",
+  "author": [
+    "[http://korrekt.org Markus Krötzsch]",
+    "Daniel Herzig"
+  ],
+  "url": "https://www.mediawiki.org/wiki/Extension:AutoCreatePage",
+  "description": "Provides a parser function to create additional wiki pages with default content when saving a page.",
+  "license-name": "GPL-2.0+",
+  "requires": {
+    "MediaWiki": ">= 1.31"
+  },
+  "AutoloadClasses": {
+    "AutoCreatePage": "AutoCreatePage.php"
+  },
+  "Hooks": {
+    "ParserFirstCallInit": [
+      "AutoCreatePage::onParserFirstCallInit"
+    ],
+    "ArticleEditUpdates": [
+      "AutoCreatePage::onArticleEditUpdates"
+    ]
+  },
+  "config": {
+    "AutoCreatePageMaxRecursion": 1,
+    "AutoCreatePageIgnoreEmptyTitle": false,
+    "AutoCreatePageNamespaces": null,
+    "_prefix": "eg"
+  },
+  "ExtensionMessagesFiles": {
+    "AutoCreatePageMagic": "AutoCreatePage.i18n.magic.php"
+  },
+  "manifest_version": 1
+}
