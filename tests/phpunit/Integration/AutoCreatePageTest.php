@@ -3,6 +3,8 @@
 namespace ACP\Tests\Integration;
 
 use MediaWikiIntegrationTestCase;
+use Title;
+use WikiPage;
 
 /**
  * @covers \ACP\AutoCreatePage
@@ -11,6 +13,19 @@ use MediaWikiIntegrationTestCase;
 class AutoCreatePageTest extends MediaWikiIntegrationTestCase {
 
 	private const EXPECTED_TEXT = 'expected text';
+	private static $defaultAutoCreatePageMaxRecursion;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		global $egAutoCreatePageMaxRecursion;
+		self::$defaultAutoCreatePageMaxRecursion = $egAutoCreatePageMaxRecursion;
+	}
+
+	protected function setUp(): void {
+		parent::setUp();
+		global $egAutoCreatePageMaxRecursion;
+		$egAutoCreatePageMaxRecursion = self::$defaultAutoCreatePageMaxRecursion;
+	}
 
 	public function testCreatesPage() {
 		[ $x, $y ] = $this->randomize( [ 'x', 'y' ] );
@@ -42,36 +57,44 @@ class AutoCreatePageTest extends MediaWikiIntegrationTestCase {
 		$this->assertEquals( "{{#createpageifnotex:$x|x}}", $text );
 	}
 
-	public function testRecurses() {
+	public function testDoesntRecurseByDefault() {
 		[ $x1, $x2, $x3 ] = self::randomize( [ 'x1', 'x2', 'x3' ] );
 		$this->insertPage( $x1,
-			"{{#createpageifnotex:$x2|{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT . '}}}}' );
+			"{{#createpageifnotex:$x2|<nowiki>{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT .
+			'}}</nowiki>}}' );
 
-		$text = $this->textOf( $x3 );
-		$this->assertEquals( self::EXPECTED_TEXT, $text );
+		$text2 = $this->textOf( $x2 );
+		$this->assertEquals( "{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT . '}}', $text2 );
 
-// todo: $x2 should not remain empty!
-//		$text = $this->textOf( $x2 );
-//		$this->assertEquals( "{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT . '}}', $text );
+		$text3 = $this->textOf( $x3 );
+		$this->assertNull( $text3 );
+	}
 
-// todo: should throw an exception instead!
-//	public function testDoesNotRecurseTooDeeply() {
-//		[ $x1, $x2, $x3, $x4 ] = self::randomize( [ 'x1', 'x2', 'x3', 'x4' ] );
-//		$this->insertPage( $x1,
-//			"{{#createpageifnotex:$x2|{{#createpageifnotex:$x3|{{#createpageifnotex:$x4|" .
-//			self::EXPECTED_TEXT . '}}}}}}' );
-//
-//		$text = $this->textOf( $x4 );
-//
-//		$this->assertEquals( self::EXPECTED_TEXT, $text );
+	public function testRecursesIfToldSo() {
+		global $egAutoCreatePageMaxRecursion;
+		$egAutoCreatePageMaxRecursion = 2;
+
+		[ $x1, $x2, $x3 ] = self::randomize( [ 'x1', 'x2', 'x3' ] );
+		$this->insertPage( $x1,
+			"{{#createpageifnotex:$x2|<nowiki>{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT .
+			'}}</nowiki>}}' );
+
+		$text2 = $this->textOf( $x2 );
+		$this->assertEquals( "{{#createpageifnotex:$x3|" . self::EXPECTED_TEXT . '}}', $text2 );
+
+		$text3 = $this->textOf( $x3 );
+		$this->assertEquals( self::EXPECTED_TEXT, $text3 );
 	}
 
 	private function textOf( $title ) {
-		return $this->getExistingTestPage( $title )->getContent()->getText();
+		$page = WikiPage::factory( Title::newFromText( $title ) );
+
+		return $page->exists() ? $page->getContent()->getText() : null;
 	}
 
 	private static function randomize( $titles ) {
-		return array_map( static function ( $t ) { return $t . '-' . mt_rand();
+		return array_map( static function ( $t ) {
+			return $t . '-' . mt_rand();
 		}, $titles );
 	}
 

@@ -20,9 +20,9 @@ jobs:
           - mediawiki_version: '1.35'
             experimental: false
           - mediawiki_version: '1.36'
-            experimental: false
+            experimental: true
           - mediawiki_version: '1.37'
-            experimental: false
+            experimental: true
 
     env:
       MW_VERSION: ${{ matrix.mediawiki_version }}
