@@ -9,3 +9,5 @@ parameters:
 		- vendor
 	scanDirectories:
 		- ../../includes
+		- ../../tests/phpunit
+		- ../../vendor/phpunit

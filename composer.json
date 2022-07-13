@@ -7,10 +7,12 @@
 	},
 	"scripts": {
 		"test": [
-			"@analyze"
+			"@analyze",
+			"@phpunit"
 		],
 		"test-coverage": [
-			"@analyze"
+			"@analyze",
+			"@phpunit-coverage"
 		],
 		"analyze": [
 			"@lint",
@@ -21,6 +23,8 @@
 		"phpcs": "phpcs -p -s .",
 		"phpcs-fix": "phpcbf .",
 		"phpstan": "phpstan analyse --configuration=phpstan.neon --memory-limit=2G",
-		"phpstan-baseline": "phpstan analyse --configuration=phpstan.neon --memory-limit=2G --generate-baseline"
+		"phpstan-baseline": "phpstan analyse --configuration=phpstan.neon --memory-limit=2G --generate-baseline",
+		"phpunit": "php ../../tests/phpunit/phpunit.php -c phpunit.xml.dist --testdox",
+		"phpunit-coverage": "php ../../tests/phpunit/phpunit.php -c phpunit.xml.dist --testdox --coverage-text --coverage-html coverage/php --coverage-clover coverage/php/coverage.xml"
 	}
 }
