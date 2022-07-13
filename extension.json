@@ -11,8 +11,8 @@
   "requires": {
     "MediaWiki": ">= 1.35"
   },
-  "AutoloadClasses": {
-    "AutoCreatePage": "AutoCreatePage.php"
+  "AutoloadNamespaces": {
+    "ACP\\": "src/"
   },
   "Hooks": {
     "ParserFirstCallInit": "main",
@@ -20,7 +20,7 @@
   },
   "HookHandlers": {
     "main": {
-      "class": "AutoCreatePage"
+      "class": "ACP\\AutoCreatePage"
     }
   },
   "config": {

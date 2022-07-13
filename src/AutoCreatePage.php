@@ -1,17 +1,24 @@
 <?php
 
+namespace ACP;
+
+use ContentHandler;
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Storage\Hook\RevisionDataUpdatesHook;
+use Parser;
+use ParserOutput;
+use Title;
+use WikiPage;
 
 /**
  * This extension provides a parser function #createpageifnotex that can be used to create
  * additional auxiliary pages when a page is saved. New pages are only created if they do
  * not exist yet. The function takes two parameters: (1) the title of the new page,
  * (2) the text to be used on the new page. It is possible to use &lt;nowiki&gt; tags in the
- * text to inserst wiki markup more conveniently.
+ * text to insert wiki markup more conveniently.
  *
  * The created page is attributed to the user who made the edit. The original idea for this
- * code was edveloped by Daniel Herzig at AIFB Karlsruhe. In his code, there were some further
+ * code was developed by Daniel Herzig at AIFB Karlsruhe. In his code, there were some further
  * facilities to show a message to the user about the pages that have been auto-created. This
  * is not implemented here yet (the basic way of doing this would be to insert some custom
  * HTML during 'OutputPageBeforeHTML').
@@ -24,7 +31,6 @@ use MediaWiki\Storage\Hook\RevisionDataUpdatesHook;
  * @author Daniel Herzig
  * @file
  */
-
 class AutoCreatePage implements ParserFirstCallInitHook, RevisionDataUpdatesHook {
 
 	public function onParserFirstCallInit( $parser ) {
@@ -68,7 +74,7 @@ class AutoCreatePage implements ParserFirstCallInitHook, RevisionDataUpdatesHook
 		}
 
 		// Get the raw text of $newPageContent as it was before stripping <nowiki>:
-		$newPageContent = $parser->mStripState->unstripNoWiki( $newPageContent );
+		$newPageContent = $parser->getStripState()->unstripNoWiki( $newPageContent );
 
 		// Store data in the parser output for later use:
 		$createPageData = $parser->getOutput()->getExtensionData( 'createPage' );
@@ -88,8 +94,6 @@ class AutoCreatePage implements ParserFirstCallInitHook, RevisionDataUpdatesHook
 	 * @param Title $sourceTitle
 	 * @param ParserOutput $output
 	 * @return bool
-	 * @throws MWContentSerializationException
-	 * @throws MWException
 	 */
 	private static function doCreatePages( $sourceTitle, $output ) {
 		global $egAutoCreatePageMaxRecursion;
