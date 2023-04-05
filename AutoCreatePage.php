@@ -25,6 +25,7 @@
 print "Hello World :)";
 if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'Not an entry point.' );
+	print "Hello World :(";
 }
 
 /**
