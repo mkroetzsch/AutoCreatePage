@@ -22,8 +22,17 @@
  * @file
  */
 
+
+function logthis($asd){ 
+    $myfile = fopen("/tmp/debug_mw.txt","a");
+    fwrite($myfile,$asd);
+    fwrite($myfile,"\n");
+   
+
+}
+
 if ( !defined( 'MEDIAWIKI' ) ) {
-	die( 'Not an entry point.' );
+    die( 'Not an entry point.' );
 }
 
 /**
@@ -65,9 +74,11 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
  * in the default text parameter to insert verbatim wiki text.
  */
 function createPageIfNotExisting( array $rawParams ) {
-	global $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle, $egAutoCreatePageNamespaces;
+    logthis("createPageIfNotExisting is run!");
+    global $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle, $egAutoCreatePageNamespaces;
+    if ( $egAutoCreatePageMaxRecursion <= 0 ) {
 
-	if ( $egAutoCreatePageMaxRecursion <= 0 ) {
+        logthis("Recursion Level Exceeded.");
 		return 'Error: Recursion level for auto-created pages exeeded.'; //TODO i18n
 	}
 
@@ -75,21 +86,29 @@ function createPageIfNotExisting( array $rawParams ) {
 		$parser = $rawParams[0];
 		$newPageTitleText = $rawParams[1];
 		$newPageContent = $rawParams[2];
-	} else {
+    } else {
+
+        logthis("Missing parameters!");
 		throw new MWException( 'Hook invoked with missing parameters.' );
 	}
 
 	if ( empty( $newPageTitleText ) ) {
-		if ( $egAutoCreatePageIgnoreEmptyTitle === false ) {
+        if ( $egAutoCreatePageIgnoreEmptyTitle === false ) {
+            
+            logthis("Valid title missing!");
 			return 'Error: this function must be given a valid title text for the page to be created.'; //TODO i18n
-		} else {
+        } else {
+
+            logthis("?0");
 			return '';
 		}
 	}
 
 	// Create pages only if the page calling the parser function is within defined namespaces
 	if ( !in_array( $parser->getTitle()->getNamespace(), $egAutoCreatePageNamespaces ) ) {
-		return '';
+        
+        logthis("?1");
+        return '';
 	}
 
 	// Get the raw text of $newPageContent as it was before stripping <nowiki>:
@@ -103,6 +122,7 @@ function createPageIfNotExisting( array $rawParams ) {
 	$createPageData[$newPageTitleText] = $newPageContent;
 	$parser->getOutput()->setExtensionData( 'createPage', $createPageData );
 
+    logthis("?2");
 	return "";
 }
 
@@ -114,8 +134,11 @@ function createPageIfNotExisting( array $rawParams ) {
 function doCreatePages( &$article, &$editInfo, $changed ) {
 	global $egAutoCreatePageMaxRecursion;
 
-	$createPageData = $editInfo->output->getExtensionData( 'createPage' );
-	if ( is_null( $createPageData ) ) {
+    logthis("doCreatePages is run!");
+    
+    $createPageData = $editInfo->output->getExtensionData( 'createPage' );
+    if ( is_null( $createPageData ) ) {
+        logthis("No Pages to create!");
 		return true; // no pages to create
 	}
 
