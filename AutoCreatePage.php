@@ -148,6 +148,9 @@ function doCreatePages( &$article, &$editInfo, $changed ) {
 	$sourceTitle = $article->getTitle();
 	$sourceTitleText = $sourceTitle->getPrefixedText();
 
+	logthis($sourceTitle);
+	logthis($sourceTitleText);
+	
 	foreach ( $createPageData as $pageTitleText => $pageContentText ) {
 		$pageTitle = Title::newFromText( $pageTitleText );
 		// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
