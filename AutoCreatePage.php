@@ -22,15 +22,19 @@
  * @file
  */
 
-
 function logthis($asd){ 
-    $myfile = fopen("/tmp/debug_mw.txt","a");
-    fwrite($myfile,$asd);
-    fwrite($myfile,"\n");
-   
-
+    global $egAutoCreatePageLogfile;
+    if (isset($egAutoCreatePageLogfile)) {
+        try {
+            $myfile = fopen($egAutoCreatePageLogfile,"a");
+            fwrite($myfile,$asd);
+            fwrite($myfile,"\n");
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
 }
-
 if ( !defined( 'MEDIAWIKI' ) ) {
     die( 'Not an entry point.' );
 }
@@ -43,6 +47,38 @@ $egAutoCreatePageMaxRecursion = 1;
 $egAutoCreatePageIgnoreEmptyTitle = false;
 
 $egAutoCreatePageNamespaces = $wgContentNamespaces;
+
+$dummyCSRFToken="+\\";
+
+
+function editRequest( $csrftoken ,$title,$text) {
+    # variable from LocalSettings.php
+    
+    global $egAutoCreatePageAPIEndpoint;
+	$params4 = [
+		"action" => "edit",
+		"title" => $title,
+		"text" => $text,
+		"token" => $csrftoken,
+        "format" => "json",
+        "createonly" => true
+	];
+
+	$ch = curl_init();
+
+	curl_setopt( $ch, CURLOPT_URL, $egAutoCreatePageAPIEndpoint );
+	curl_setopt( $ch, CURLOPT_POST, true );
+	curl_setopt( $ch, CURLOPT_POSTFIELDS, http_build_query( $params4 ) );
+	curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+	curl_setopt( $ch, CURLOPT_COOKIEJAR, "cookie.txt" );
+	curl_setopt( $ch, CURLOPT_COOKIEFILE, "cookie.txt" );
+
+	$output = curl_exec( $ch );
+	curl_close( $ch );
+
+	return $output;
+}
+
 
 $GLOBALS['wgExtensionCredits']['other'][] = array(
 	'name'         => 'AutoCreatePage',
@@ -65,7 +101,7 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
 
 	};
 
-	$GLOBALS['wgHooks']['ArticleEditUpdates'][] = 'doCreatePages';
+	$GLOBALS['wgHooks']['RevisionDataUpdates'][] = 'doCreatePages';
 };
 
 /**
@@ -74,11 +110,9 @@ $GLOBALS['wgExtensionFunctions'][] = function() {
  * in the default text parameter to insert verbatim wiki text.
  */
 function createPageIfNotExisting( array $rawParams ) {
-    logthis("createPageIfNotExisting is run!");
     global $egAutoCreatePageMaxRecursion, $egAutoCreatePageIgnoreEmptyTitle, $egAutoCreatePageNamespaces;
     if ( $egAutoCreatePageMaxRecursion <= 0 ) {
 
-        logthis("Recursion Level Exceeded.");
 		return 'Error: Recursion level for auto-created pages exeeded.'; //TODO i18n
 	}
 
@@ -88,18 +122,15 @@ function createPageIfNotExisting( array $rawParams ) {
 		$newPageContent = $rawParams[2];
     } else {
 
-        logthis("Missing parameters!");
 		throw new MWException( 'Hook invoked with missing parameters.' );
 	}
 
 	if ( empty( $newPageTitleText ) ) {
         if ( $egAutoCreatePageIgnoreEmptyTitle === false ) {
             
-            logthis("Valid title missing!");
 			return 'Error: this function must be given a valid title text for the page to be created.'; //TODO i18n
         } else {
 
-            logthis("?0");
 			return '';
 		}
 	}
@@ -107,7 +138,6 @@ function createPageIfNotExisting( array $rawParams ) {
 	// Create pages only if the page calling the parser function is within defined namespaces
 	if ( !in_array( $parser->getTitle()->getNamespace(), $egAutoCreatePageNamespaces ) ) {
         
-        logthis("?1");
         return '';
 	}
 
@@ -122,7 +152,6 @@ function createPageIfNotExisting( array $rawParams ) {
 	$createPageData[$newPageTitleText] = $newPageContent;
 	$parser->getOutput()->setExtensionData( 'createPage', $createPageData );
 
-    logthis("?2");
 	return "";
 }
 
@@ -131,41 +160,32 @@ function createPageIfNotExisting( array $rawParams ) {
  * after the safe is complete to avoid any concurrent article modifications.
  * Note that article is, in spite of its name, a WikiPage object since MW 1.21.
  */
-function doCreatePages( &$article, &$editInfo, $changed ) {
+function doCreatePages( $title, $renderedRevision, &$updates ) {
 	global $egAutoCreatePageMaxRecursion;
 
-    logthis("doCreatePages is run!");
     
-    $createPageData = $editInfo->output->getExtensionData( 'createPage' );
+    $createPageData = $renderedRevision->getRevisionParserOutput()->getExtensionData( 'createPage' );
     if ( is_null( $createPageData ) ) {
-        logthis("No Pages to create!");
 		return true; // no pages to create
 	}
-
 	// Prevent pages to be created by pages that are created to avoid loops:
 	$egAutoCreatePageMaxRecursion--;
-
-	$sourceTitle = $article->getTitle();
+    $sourceTitle = Title::newFromId($renderedRevision->getRevision()->getPageId());
 	$sourceTitleText = $sourceTitle->getPrefixedText();
+        
+    foreach ( $createPageData as $pageTitleText => $pageContentText ) {
+        $pageTitle = Title::newFromText( $pageTitleText );
 
-	foreach ( $createPageData as $pageTitleText => $pageContentText ) {
-		$pageTitle = Title::newFromText( $pageTitleText );
-		// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
-
-		if ( !is_null( $pageTitle ) && !$pageTitle->isKnown() && $pageTitle->canExist() ){
-			$newWikiPage = new WikiPage( $pageTitle );
-			$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
-			$newWikiPage->doEditContent( $pageContent,
-				"Page created automatically by parser function on page [[$sourceTitleText]]" ); //TODO i18n
-
-			// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
-		}
+        # use api call because its esier to implement    
+        logthis("Tring to create page " . $pageTitleText);
+        $req = editRequest("+\\",$pageTitleText,$pageContentText);
+        logthis("Response was:" . $req);
 	}
 
 	// Reset state. Probably not needed since parsing is usually done here anyway:
-	$editInfo->output->setExtensionData( 'createPage', null ); 
+	$renderedRevision->getRevisionParserOutput()->setExtensionData( 'createPage', null ); 
 	$egAutoCreatePageMaxRecursion++;
 
 	return true;
 }
-
+?>
