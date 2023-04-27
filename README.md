@@ -60,7 +60,7 @@ Also **change to your wikiurl** and add
 $egAutoCreatePageLogfile="autocreatepage.log";
 $egAutoCreatePageAPIEndpoint="$YOURWIKIURL/api.php";
 ```
-`to the Localsettings.php
+to the Localsettings.php
 
 Tested in mediawiki 1.39. Should work in most earlier versions.
 
