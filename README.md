@@ -54,7 +54,7 @@ from your extension directory. Then add to your LocalSettings.php:
 
 `include_once "$IP/extensions/AutoCreatePage/AutoCreatePage.php";`
 
-Also change to your wikiurl and add 
+Also **change to your wikiurl** and add 
 
 ```
 $egAutoCreatePageLogfile="autocreatepage.log";
