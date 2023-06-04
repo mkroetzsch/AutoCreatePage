@@ -29,6 +29,7 @@ function logthis($asd){
             $myfile = fopen($egAutoCreatePageLogfile,"a");
             fwrite($myfile,$asd);
             fwrite($myfile,"\n");
+	    fclose($myfile);
             return true;
         } catch (Exception $e) {
             return false;
