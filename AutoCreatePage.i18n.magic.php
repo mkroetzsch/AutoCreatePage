@@ -2,13 +2,13 @@
 
 /**
  * Magic words
- * 
+ *
  * @file
  */
 
-$magicWords = array();
+$magicWords = [];
 
 /** English (English) */
-$magicWords['en'] = array(
-	'createPage' => array( 0, 'createpageifnotex' ),
-);
+$magicWords['en'] = [
+	'createPage' => [ 0, 'createpageifnotex' ],
+];
