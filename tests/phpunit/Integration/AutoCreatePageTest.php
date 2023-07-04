@@ -2,7 +2,10 @@
 
 namespace ACP\Tests\Integration;
 
+use FauxRequest;
+use MediaWiki\MediaWikiServices;
 use MediaWikiIntegrationTestCase;
+use RequestContext;
 use Title;
 use WikiPage;
 
@@ -25,6 +28,12 @@ class AutoCreatePageTest extends MediaWikiIntegrationTestCase {
 		parent::setUp();
 		global $egAutoCreatePageMaxRecursion;
 		$egAutoCreatePageMaxRecursion = self::$defaultAutoCreatePageMaxRecursion;
+	}
+
+	protected function tearDown(): void {
+		parent::tearDown();
+		global $egAutoCreatePageOnSpecialPages;
+		$egAutoCreatePageOnSpecialPages = [];
 	}
 
 	public function testCreatesPage() {
@@ -84,6 +93,33 @@ class AutoCreatePageTest extends MediaWikiIntegrationTestCase {
 
 		$text3 = $this->textOf( $x3 );
 		$this->assertEquals( self::EXPECTED_TEXT, $text3 );
+	}
+
+	public function testIsNotCalledFromUnenabledSpecialPage() {
+		$page = $page = self::createOnSpecialExpandTemplates( 'NotCreated' );
+
+		$this->assertFalse( $page->exists() );
+	}
+
+	public function testIsCalledFromEnabledSpecialPage() {
+		global $egAutoCreatePageOnSpecialPages;
+		$egAutoCreatePageOnSpecialPages = [ 'ExpandTemplates' ];
+
+		$page = self::createOnSpecialExpandTemplates( 'Created' );
+
+		$this->assertTrue( $page->exists() );
+	}
+
+	private static function createOnSpecialExpandTemplates( $title ) {
+		$ctx = new RequestContext();
+		$ctx->setRequest( new FauxRequest( [
+			'wpContextTitle' => 'X',
+			'wpInput' => "{{#createpageifnotex:$title|Some content...}}",
+		] ) );
+		$sp = Title::makeTitle( NS_SPECIAL, 'ExpandTemplates' );
+		MediaWikiServices::getInstance()->getSpecialPageFactory()->executePath( $sp, $ctx );
+
+		return WikiPage::factory( Title::newFromText( $title ) );
 	}
 
 	private function textOf( $title ) {

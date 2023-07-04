@@ -16,7 +16,9 @@
   },
   "Hooks": {
     "ParserFirstCallInit": "main",
-    "RevisionDataUpdates": "main"
+    "RevisionDataUpdates": "main",
+    "SpecialPageBeforeExecute": "main",
+    "SpecialPageAfterExecute": "main"
   },
   "HookHandlers": {
     "main": {
@@ -27,6 +29,7 @@
     "AutoCreatePageMaxRecursion": 1,
     "AutoCreatePageIgnoreEmptyTitle": false,
     "AutoCreatePageNamespaces": null,
+    "AutoCreatePageOnSpecialPages": [],
     "_prefix": "eg"
   },
   "ExtensionMessagesFiles": {
