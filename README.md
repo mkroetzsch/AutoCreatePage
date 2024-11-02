@@ -52,9 +52,9 @@ directory of your MediaWiki installation. You can do this with git by calling:
 
 from your extension directory. Then add to your LocalSettings.php:
 
-`include_once "$IP/extensions/AutoCreatePage/AutoCreatePage.php";`
+`mfLoadExtension( 'AutoCreatePage' );`
 
-The code requires MediaWiki 1.21 to work. It has been tested on MediaWiki 1.23.
+The code requires MediaWiki 1.39 to work. It has been tested on MediaWiki 1.39.
 Future versions might also work.
 
 
@@ -84,9 +84,7 @@ Status
 
 This code is experimental. Use with care. Internationalization is largely missing.
 
-As of MediaWiki 1.23, the code avoids deprecated functions or hooks. However, it
-accesses the parser's `mStripState` member (intended private?) to process nowiki
-tags. This might have to be replaced by some other approach in the future.
+As of MediaWiki 1.39, the code avoids deprecated functions or hooks.
 
 
 Credits
