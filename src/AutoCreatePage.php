@@ -126,7 +126,6 @@ class AutoCreatePage implements
 
 		// Reset state. Probably not needed since parsing is usually done here anyway:
 		$output->setExtensionData( 'createPage', null );
-		$egAutoCreatePageMaxRecursion++;
 
 		return true;
 	}
