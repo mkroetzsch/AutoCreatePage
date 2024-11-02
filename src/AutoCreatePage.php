@@ -2,14 +2,16 @@
 
 namespace ACP;
 
-use ContentHandler;
+use CommentStoreComment;
 use MediaWiki\Hook\ParserFirstCallInitHook;
+use MediaWiki\MediaWikiServices;
+use MediaWiki\Revision\SlotRecord;
 use MediaWiki\SpecialPage\Hook\SpecialPageAfterExecuteHook;
 use MediaWiki\SpecialPage\Hook\SpecialPageBeforeExecuteHook;
 use MediaWiki\Storage\Hook\RevisionDataUpdatesHook;
 use Parser;
 use Title;
-use WikiPage;
+use WikitextContent;
 
 /**
  * This extension provides a parser function #createpageifnotex that can be used to create
@@ -77,11 +79,15 @@ class AutoCreatePage implements
 
 		// Get the raw text of $newPageContent as it was before stripping <nowiki>:
 		$newPageContent = $parser->getStripState()->unstripNoWiki( $newPageContent );
+		$newPageData = [
+			"content" => $newPageContent,
+			"user" => $parser->getUserIdentity()
+		];
 
 		$enabledSpecialPage = self::enabledSpecialPage();
 		if ( $enabledSpecialPage ) {
 			// Store data in static variable for later use in onSpecialPageAfterExecute:
-			$enabledSpecialPage->addPageToCreate( $newPageTitleText, $newPageContent );
+			$enabledSpecialPage->addPageToCreate( $newPageTitleText, $newPageData );
 		} elseif ( in_array( $parser->getTitle()->getNamespace(), $autoCreatePageNamespaces ) ) {
 			// For pages with namespace in $autoCreatePageNamespaces store data in the parser output
 			// for later use in onRevisionDataUpdates:s
@@ -89,7 +95,7 @@ class AutoCreatePage implements
 			if ( $createPageData === null ) {
 				$createPageData = [];
 			}
-			$createPageData[$newPageTitleText] = $newPageContent;
+			$createPageData[$newPageTitleText] = $newPageData;
 			$parser->getOutput()->setExtensionData( 'createPage', $createPageData );
 		}
 
@@ -114,13 +120,12 @@ class AutoCreatePage implements
 		// Prevent pages to be created by pages that are created to avoid loops:
 		$egAutoCreatePageMaxRecursion--;
 
-		foreach ( $createPageData as $pageTitleText => $pageContentText ) {
-			self::createPage( $title, $pageTitleText, $pageContentText );
+		foreach ( $createPageData as $pageTitleText => $pageContentData ) {
+			self::createPage( $title, $pageTitleText, $pageContentData );
 		}
 
 		// Reset state. Probably not needed since parsing is usually done here anyway:
 		$output->setExtensionData( 'createPage', null );
-		$egAutoCreatePageMaxRecursion++;
 
 		return true;
 	}
@@ -142,8 +147,8 @@ class AutoCreatePage implements
 		$specialPage = array_pop( self::$specialPageStack );
 
 		if ( $specialPage->isEnabled() ) {
-			foreach ( $specialPage->pagesToCreate() as $pageTitleText => $pageContentText ) {
-				self::createPage( $special->getFullTitle(), $pageTitleText, $pageContentText );
+			foreach ( $specialPage->pagesToCreate() as $pageTitleText => $pageContentData ) {
+				self::createPage( $special->getFullTitle(), $pageTitleText, $pageContentData );
 			}
 		}
 	}
@@ -157,16 +162,23 @@ class AutoCreatePage implements
 		return $currentSpecialPage !== null && $currentSpecialPage->isEnabled() ? $currentSpecialPage : null;
 	}
 
-	private static function createPage( $sourceTitle, $pageTitleText, $pageContentText ) {
+	private static function createPage( $sourceTitle, $pageTitleText, $pageContentData ) {
+		$pageContentText = new WikitextContent( $pageContentData["content"] );
+		$author = $pageContentData["user"];
 		$sourceTitleText = $sourceTitle->getPrefixedText();
 		$pageTitle = Title::newFromText( $pageTitleText );
 		// wfDebugLog( 'createpage', "CREATE " . $pageTitle->getText() . " Text: " . $pageContent );
 
 		if ( $pageTitle !== null && !$pageTitle->isKnown() && $pageTitle->canExist() ) {
-			$newWikiPage = new WikiPage( $pageTitle );
-			$pageContent = ContentHandler::makeContent( $pageContentText, $sourceTitle );
-			$newWikiPage->doEditContent( $pageContent,
-				"Page created automatically by parser function on page [[$sourceTitleText]]" ); // TODO i18n
+			$page = $pageTitle->toPageIdentity();
+			$comment = CommentStoreComment::newUnsavedComment(
+				"Page created automatically by parser function on page [[$sourceTitleText]]" // TODO i18n
+			);
+			$factory = MediaWikiServices::getInstance()->getPageUpdaterFactory();
+			$updater = $factory->newPageUpdater( $page, $author );
+			$updater->setContent( SlotRecord::MAIN, $pageContentText );
+			$updater->saveRevision( $comment );
+
 			// wfDebugLog( 'createpage', "CREATED PAGE " . $pageTitle->getText() . " Text: " . $pageContent );
 		}
 	}

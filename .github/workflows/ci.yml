@@ -2,27 +2,21 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
-
   ci:
-
     runs-on: ubuntu-20.04
     continue-on-error: ${{ matrix.experimental }}
 
     strategy:
       matrix:
         include:
-          - mediawiki_version: '1.35'
+          - mediawiki_version: "1.39"
             experimental: false
-          - mediawiki_version: '1.36'
-            experimental: true
-          - mediawiki_version: '1.37'
-            experimental: true
 
     env:
       MW_VERSION: ${{ matrix.mediawiki_version }}

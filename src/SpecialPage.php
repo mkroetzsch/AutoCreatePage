@@ -15,8 +15,8 @@ class SpecialPage {
 		return $this->isEnabled;
 	}
 
-	public function addPageToCreate( $titleText, $content ) {
-		$this->pagesToCreate[$titleText] = $content;
+	public function addPageToCreate( $titleText, $data ) {
+		$this->pagesToCreate[$titleText] = $data;
 	}
 
 	public function pagesToCreate() {
