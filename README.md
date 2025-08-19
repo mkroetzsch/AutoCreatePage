@@ -52,7 +52,7 @@ directory of your MediaWiki installation. You can do this with git by calling:
 
 from your extension directory. Then add to your LocalSettings.php:
 
-`mfLoadExtension( 'AutoCreatePage' );`
+`wfLoadExtension( 'AutoCreatePage' );`
 
 The code requires MediaWiki 1.39 to work. It has been tested on MediaWiki 1.39.
 Future versions might also work.
